@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE"
+  },
+  "deploy": {
+    "restartPolicyType": "ON_FAILURE"
+  },
+  "variables": {
+    "OPENAI_BASE_URL": {
+      "description": "API address",
+      "defaultValue": "https://api.avalai.ir/v1"
+    },
+    "OPENAI_API_KEY": {
+      "description": "API key"
+    },
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "Telegram bot token"
+    },
+    "TELEGRAM_ALLOWED_USERS": {
+      "description": "Telegram user ID"
+    }
+  }
+}

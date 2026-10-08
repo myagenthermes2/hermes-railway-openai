@@ -52,9 +52,9 @@ OPENAI_API_KEY="$(get_var OPENAI_API_KEY)"
 ANTHROPIC_API_KEY="$(get_var ANTHROPIC_API_KEY)"
 
 provider_ok=false
-if [[ -n "$OPENROUTER_API_KEY" ]]; then
+if [[ -n "$OPENAI_BASE_URL" && -n "$OPENAI_API_KEY" ]]; then
   provider_ok=true
-elif [[ -n "$OPENAI_BASE_URL" && -n "$OPENAI_API_KEY" ]]; then
+elif [[ -n "$OPENROUTER_API_KEY" ]]; then
   provider_ok=true
 elif [[ -n "$ANTHROPIC_API_KEY" ]]; then
   provider_ok=true
@@ -62,8 +62,8 @@ fi
 
 if ! $provider_ok; then
   error "No AI provider configured. Set one of:"
+  echo "  • OPENAI_BASE_URL + OPENAI_API_KEY (پیشنهاد: درگاه ایرانی سازگار با OpenAI)"
   echo "  • OPENROUTER_API_KEY"
-  echo "  • OPENAI_BASE_URL + OPENAI_API_KEY"
   echo "  • ANTHROPIC_API_KEY"
   echo ""
   echo "  Add via: railway variables --set KEY=value"

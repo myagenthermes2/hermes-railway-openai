@@ -1,6 +1,8 @@
-# Hermes Agent Railway Template
+# Hermes Agent Railway Template (OpenAI-Compatible)
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/hermes-railway-template?referralCode=uTN7AS&utm_medium=integration&utm_source=template&utm_campaign=generic)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new?repo=https://github.com/myagenthermes2/hermes-railway-openai)
+
+فورک فارسی تمپلیت اصلی — به‌جای OpenRouter از درگاه سازگار با OpenAI استفاده می‌کند (مثل AvalAI، کایا، هرمز).
 
 Deploy [Hermes Agent](https://github.com/NousResearch/hermes-agent) to Railway as a worker service with persistent state.
 
@@ -170,8 +172,8 @@ Set at least one inference provider:
 
 | Variable | Description |
 |---|---|
+| `OPENAI_API_KEY` + `OPENAI_BASE_URL` | OpenAI-compatible provider (پیشنهاد: درگاه ایرانی مثل AvalAI، کایا، هرمز) |
 | `OPENROUTER_API_KEY` | OpenRouter API key |
-| `OPENAI_API_KEY` + `OPENAI_BASE_URL` | OpenAI-compatible provider |
 | `ANTHROPIC_API_KEY` | Anthropic direct API |
 
 Set at least one messaging platform:
@@ -673,7 +675,8 @@ Replace `main` with a tag or commit SHA to lock the version.
 docker build -t hermes-railway-template .
 
 docker run --rm \
-  -e OPENROUTER_API_KEY=sk-or-xxx \
+  -e OPENAI_BASE_URL=https://api.avalai.ir/v1 \
+  -e OPENAI_API_KEY=xxx \
   -e TELEGRAM_BOT_TOKEN=123456:ABC \
   -e TELEGRAM_ALLOWED_USERS=123456789 \
   -v "$(pwd)/.tmpdata:/data" \
