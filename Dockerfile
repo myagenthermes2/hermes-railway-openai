@@ -17,7 +17,7 @@ ENV PATH="/opt/venv/bin:${PATH}"
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -e "/opt/hermes-agent[messaging,cron,cli,pty]"
 # Upstream gates ruamel.yaml on python>=3.14 but our image is 3.11 — pin it explicitly.
-RUN pip install --no-cache-dir "ruamel.yaml>=0.18.0"
+RUN pip install --no-cache-dir "ruamel.yaml>=0.18.0" "rich>=13.0.0" "truststore>=0.8.0"
 
 # Python dependencies for agent_server and radius scripts
 RUN pip install --no-cache-dir \
