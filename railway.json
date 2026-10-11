@@ -15,10 +15,16 @@
       "description": "API key"
     },
     "TELEGRAM_BOT_TOKEN": {
-      "description": "Telegram bot token"
+      "description": "Telegram bot token (leave empty when using Bale)"
     },
     "TELEGRAM_ALLOWED_USERS": {
       "description": "Telegram user ID"
+    },
+    "BALE_BOT_TOKEN": {
+      "description": "Bale bot token from @BotFather in Bale (leave empty when using Telegram)"
+    },
+    "BALE_ALLOWED_USERS": {
+      "description": "Bale user ID (same numeric ID as Telegram)"
     }
   }
 }

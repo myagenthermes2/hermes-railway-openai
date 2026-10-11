@@ -109,6 +109,10 @@ validate_platforms() {
     count=$((count + 1))
   fi
 
+  if [[ -n "${BALE_BOT_TOKEN:-}" ]]; then
+    count=$((count + 1))
+  fi
+
   if [[ -n "${DISCORD_BOT_TOKEN:-}" ]]; then
     count=$((count + 1))
   fi
@@ -122,10 +126,29 @@ validate_platforms() {
   fi
 
   if [[ "$count" -lt 1 ]]; then
-    echo "[bootstrap] ERROR: Configure at least one platform: Telegram, Discord, or Slack." >&2
+    echo "[bootstrap] ERROR: Configure at least one platform: Telegram, Bale, Discord, or Slack." >&2
     exit 1
   fi
 }
+
+# === Bale: reuse the Telegram adapter against tapi.bale.ai ===
+# Bale's Bot API mirrors Telegram's (sendMessage/getUpdates/setWebhook).
+# When BALE_BOT_TOKEN is set (and TELEGRAM_BOT_TOKEN is not), we inject
+# base_url + token into platforms.telegram so the existing adapter talks to Bale.
+if [[ -n "${BALE_BOT_TOKEN:-}" && -z "${TELEGRAM_BOT_TOKEN:-}" ]]; then
+  export TELEGRAM_BOT_TOKEN="${BALE_BOT_TOKEN}"
+  if [[ -z "${TELEGRAM_ALLOWED_USERS:-}" && -n "${BALE_ALLOWED_USERS:-}" ]]; then
+    export TELEGRAM_ALLOWED_USERS="${BALE_ALLOWED_USERS}"
+  fi
+  if [[ -z "${TELEGRAM_ALLOW_ALL_USERS:-}" && -n "${BALE_ALLOW_ALL_USERS:-}" ]]; then
+    export TELEGRAM_ALLOW_ALL_USERS="${BALE_ALLOW_ALL_USERS}"
+  fi
+  if [[ -z "${TELEGRAM_HOME_CHANNEL:-}" && -n "${BALE_HOME_CHANNEL:-}" ]]; then
+    export TELEGRAM_HOME_CHANNEL="${BALE_HOME_CHANNEL}"
+  fi
+  export HERMES_BALE_BASE_URL="${BALE_BASE_URL:-https://tapi.bale.ai/bot}"
+  echo "[bootstrap] Bale mode: routing Telegram adapter to ${HERMES_BALE_BASE_URL}"
+fi
 
 has_valid_provider_config() {
   if [[ -n "${OPENROUTER_API_KEY:-}" ]]; then
@@ -195,6 +218,7 @@ echo "[bootstrap] Writing runtime env to ${ENV_FILE}"
 for key in \
   OPENROUTER_API_KEY OPENAI_API_KEY OPENAI_BASE_URL ANTHROPIC_API_KEY LLM_MODEL HERMES_INFERENCE_PROVIDER HERMES_PORTAL_BASE_URL NOUS_INFERENCE_BASE_URL HERMES_NOUS_MIN_KEY_TTL_SECONDS HERMES_DUMP_REQUESTS \
   TELEGRAM_BOT_TOKEN TELEGRAM_ALLOWED_USERS TELEGRAM_ALLOW_ALL_USERS TELEGRAM_HOME_CHANNEL TELEGRAM_HOME_CHANNEL_NAME \
+  BALE_BOT_TOKEN BALE_ALLOWED_USERS BALE_ALLOW_ALL_USERS BALE_HOME_CHANNEL BALE_BASE_URL \
   DISCORD_BOT_TOKEN DISCORD_ALLOWED_USERS DISCORD_ALLOW_ALL_USERS DISCORD_HOME_CHANNEL DISCORD_HOME_CHANNEL_NAME DISCORD_REQUIRE_MENTION DISCORD_FREE_RESPONSE_CHANNELS \
   SLACK_BOT_TOKEN SLACK_APP_TOKEN SLACK_ALLOWED_USERS SLACK_ALLOW_ALL_USERS SLACK_HOME_CHANNEL SLACK_HOME_CHANNEL_NAME WHATSAPP_ENABLED WHATSAPP_ALLOWED_USERS \
   GATEWAY_ALLOW_ALL_USERS \
@@ -225,6 +249,34 @@ compression:
   enabled: true
   threshold: 0.85
 EOF
+fi
+
+# === Bale: inject base_url into platforms.telegram.extra ===
+# Runs on every deploy so the route stays fresh. Only when Bale mode is on
+# (BALE_BOT_TOKEN set, TELEGRAM_BOT_TOKEN unset- originally).
+if [[ -n "${HERMES_BALE_BASE_URL:-}" ]]; then
+  echo "[bootstrap] Injecting Bale base_url into config.yaml..."
+  python3 - <<'PYEOF'
+import os
+cfg_file = os.environ['HERMES_HOME'] + '/config.yaml'
+base_url = os.environ['HERMES_BALE_BASE_URL']
+try:
+    import yaml
+    with open(cfg_file) as f:
+        cfg = yaml.safe_load(f) or {}
+    plats = cfg.get('platforms') or {}
+    tg = plats.get('telegram') or {}
+    extra = tg.get('extra') or {}
+    extra['base_url'] = base_url
+    tg['extra'] = extra
+    plats['telegram'] = tg
+    cfg['platforms'] = plats
+    with open(cfg_file, 'w') as f:
+        yaml.safe_dump(cfg, f)
+    print('[bootstrap] Bale base_url injected:', base_url)
+except Exception as e:
+    print('[bootstrap] WARNING: Bale base_url injection failed:', e)
+PYEOF
 fi
 
 # === A2A: inject webhook route when WEBHOOK_SECRET is configured ===
